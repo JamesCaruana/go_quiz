@@ -44,14 +44,18 @@ func init() {
 
 }
 
-type Payload struct {
-	Results string `json:"results"`
-	// Results      Results `json:"results"`
+type questionResponse struct {
+	ResponseCode int        `json:"response_code"`
+	Results      []Question `json:"results"`
 }
 
-// type Results struct {
-// 	Question string `json:"question"`
-// }
+// Question is the model of the Open Trivia API Question related
+// methods.
+type Question struct {
+	Question         string   `json:"question"`
+	CorrectAnswer    string   `json:"correct_answer"`
+	IncorrectAnswers []string `json:"incorrect_answers"`
+}
 
 func test() {
 
@@ -63,18 +67,13 @@ func test() {
 		data, _ := ioutil.ReadAll(response.Body)
 		log.Println(string(data))
 
-		// Unstructured data approach
-		// var reading map[string]interface{}
-		// err = json.Unmarshal([]byte(data), &reading)
-		// fmt.Printf("%+v\n", reading)
-
-		var questions []Payload
+		var q_response questionResponse
 		// var questions []Payload
-		err := json.Unmarshal(data, &questions)
+		err := json.Unmarshal(data, &q_response)
 		if err != nil {
 			log.Println(err)
 		}
-		fmt.Printf("%v\n", questions)
+		fmt.Printf("%v\n", q_response.Results[1].Question)
 
 	}
 	// Need to unmarshall data
