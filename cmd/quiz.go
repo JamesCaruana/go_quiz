@@ -25,7 +25,8 @@ var quizCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		var q_data = getQuizData()
-		organiseData(q_data)
+		questions, answers := organiseData(q_data)
+		startQuiz(questions, answers)
 
 	},
 }
@@ -97,15 +98,48 @@ func organiseData(q *QuestionsData) ([10]string, [10][4]string) {
 	for i := 0; i < len(q.Results); i++ {
 		questions[i] = html.UnescapeString(q.Results[i].Question)
 		// Inner loop is used to organise quiz possible answers
-		for k := 0; k < len(q.Results[i].IncorrectAnswers); k++ {
+		for j := 0; j < len(q.Results[i].IncorrectAnswers); j++ {
 			answers[i][0] = html.UnescapeString(q.Results[i].CorrectAnswer)
-			answers[i][k+1] = html.UnescapeString(q.Results[i].IncorrectAnswers[k])
+			answers[i][j+1] = html.UnescapeString(q.Results[i].IncorrectAnswers[j])
 		}
 		rand.Seed(time.Now().UnixNano())
-		rand.Shuffle(4, func(h, j int) { answers[i][h], answers[i][j] = answers[i][j], answers[i][h] })
+		rand.Shuffle(4, func(k, l int) { answers[i][k], answers[i][l] = answers[i][l], answers[i][k] })
 	}
 
-	fmt.Printf("Question: %v\nPossible Answers: %v, %v, %v, %v", questions[9], answers[9][0], answers[9][1], answers[9][2], answers[9][3])
+	//fmt.Printf("Question: %v\nPossible Answers: %v, %v, %v, %v\n", questions[9], answers[9][0], answers[9][1], answers[9][2], answers[9][3])
 
 	return questions, answers
+}
+
+func startQuiz(questions [10]string, answers [10][4]string) {
+
+	fmt.Println("------------Starting Quiz------------")
+	//fmt.Print(len(answers[1]))
+
+	for i := 0; i < len(questions); i++ {
+		fmt.Printf("\nQuestion %v\n%v\n", i+1, questions[i])
+		for k := 0; k < len(answers[i]); k++ {
+			fmt.Printf("%v) %v\n", k+1, answers[i][k])
+		}
+
+		var choice int
+		fmt.Println("Input a number between 1-4 to answer.")
+		fmt.Scanln(&choice)
+		checkRange(choice)
+		checkAnswer(choice)
+	}
+}
+
+func checkRange(choice int) int {
+	if (choice >= 1) && (choice <= 4) {
+		return choice
+	} else {
+		fmt.Println("Input a number between 1-4 to answer.")
+		fmt.Scanln(&choice)
+		return checkRange(choice)
+	}
+}
+
+func checkAnswer(choice int) {
+
 }
