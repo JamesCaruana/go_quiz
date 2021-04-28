@@ -123,23 +123,28 @@ func startQuiz(questions [10]string, answers [10][4]string) {
 		}
 
 		var choice int
-		fmt.Println("Input a number between 1-4 to answer.")
-		fmt.Scanln(&choice)
-		checkRange(choice)
-		checkAnswer(choice)
+		fmt.Println("Input a number between 1-4 to answer1.")
+		fmt.Scan(&choice)
+
+		choice = checkRange(choice)
+
+		var actual_answer string = answers[i][choice-1]
+		fmt.Printf(actual_answer)
+		//checkAnswer(choice)
 	}
 }
 
 func checkRange(choice int) int {
 	if (choice >= 1) && (choice <= 4) {
+		fmt.Print(choice)
 		return choice
 	} else {
-		fmt.Println("Input a number between 1-4 to answer.")
-		fmt.Scanln(&choice)
+		fmt.Println("Input a number between 1-4 to answer2.")
+		fmt.Scan(&choice)
 		return checkRange(choice)
 	}
 }
 
-func checkAnswer(choice int) {
+func checkAnswer(choice string, q *QuestionsData) {
 
 }
