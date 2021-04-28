@@ -18,6 +18,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -44,13 +45,14 @@ func init() {
 
 }
 
-type questionResponse struct {
+// Created structs to unmarshal json data in from the Open Trivia API.
+// Question data struct contains the response code and array of questions data stored in results json tag.
+type QuestionsData struct {
 	ResponseCode int        `json:"response_code"`
 	Results      []Question `json:"results"`
 }
 
-// Question is the model of the Open Trivia API Question related
-// methods.
+// Question struct contains the question, correct answer and incorrect answers
 type Question struct {
 	Question         string   `json:"question"`
 	CorrectAnswer    string   `json:"correct_answer"`
@@ -60,22 +62,19 @@ type Question struct {
 func test() {
 
 	// Getting questions from Open Trivia API w/ error handling
-	response, err := http.Get("https://opentdb.com/api.php?amount=10&difficulty=medium&type=multiple")
-	if err != nil {
-		log.Printf("HTTP request failed - %v", err)
-	} else {
-		data, _ := ioutil.ReadAll(response.Body)
-		log.Println(string(data))
-
-		var q_response questionResponse
-		// var questions []Payload
-		err := json.Unmarshal(data, &q_response)
-		if err != nil {
-			log.Println(err)
-		}
-		fmt.Printf("%v\n", q_response.Results[1].Question)
-
+	response, err_0 := http.Get("https://opentdb.com/api.php?amount=10&difficulty=medium&type=multiple")
+	if err_0 != nil {
+		log.Printf("HTTP request failed - %v", err_0)
 	}
-	// Need to unmarshall data
+	data, _ := ioutil.ReadAll(response.Body)
+	log.Println(string(data))
+	var q_data QuestionsData
+
+	err_1 := json.Unmarshal(data, &q_data)
+	if err_1 != nil {
+		log.Println(err_1)
+	}
+	// :catjam:
+	fmt.Printf("%v\n", html.UnescapeString(q_data.Results[1].Question))
 
 }
