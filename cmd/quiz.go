@@ -1,18 +1,3 @@
-/*
-Copyright © 2021 NAME HERE <EMAIL ADDRESS>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
 package cmd
 
 import (
@@ -21,7 +6,9 @@ import (
 	"html"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -36,7 +23,10 @@ var quizCmd = &cobra.Command{
 	- Display how many correct answers user got.
 	- Show some statistics.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		test()
+
+		var q_data = getQuizData()
+		organiseData(q_data)
+
 	},
 }
 
@@ -45,8 +35,10 @@ func init() {
 
 }
 
-// Created structs to unmarshal json data in from the Open Trivia API.
-// Question data struct contains the response code and array of questions data stored in results json tag.
+/*
+	Created structs to unmarshal json data in from the Open Trivia API.
+	Question data struct contains the response code and array of questions data stored in results json tag.
+*/
 type QuestionsData struct {
 	ResponseCode int        `json:"response_code"`
 	Results      []Question `json:"results"`
@@ -59,15 +51,22 @@ type Question struct {
 	IncorrectAnswers []string `json:"incorrect_answers"`
 }
 
-func test() {
+/*
+	Function which gets a random set of 10 questions from the Open Trivia API and
+	returns a structure of the data.
+*/
+func getQuizData() *QuestionsData {
 
 	// Getting questions from Open Trivia API w/ error handling
-	response, err_0 := http.Get("https://opentdb.com/api.php?amount=10&difficulty=medium&type=multiple")
+	response, err_0 := http.Get("https://opentdb.com/api.php?amount=10&category=15&difficulty=medium&type=multiple")
 	if err_0 != nil {
 		log.Printf("HTTP request failed - %v", err_0)
 	}
 	data, _ := ioutil.ReadAll(response.Body)
+
+	// Print the result of API call
 	log.Println(string(data))
+
 	var q_data QuestionsData
 
 	err_1 := json.Unmarshal(data, &q_data)
@@ -75,6 +74,38 @@ func test() {
 		log.Println(err_1)
 	}
 	// :catjam:
-	fmt.Printf("%v\n", html.UnescapeString(q_data.Results[1].Question))
+	//fmt.Printf("%v\n", html.UnescapeString(q_data.Results[0].Question))
 
+	return &q_data
+
+}
+
+/*
+	Function which organises quiz data into arrays in order print them easily in
+	the quiz.
+*/
+func organiseData(q *QuestionsData) ([10]string, [10][4]string) {
+
+	// Testing prints
+	fmt.Printf("Length of Array:\t%v\n", len(q.Results))
+	fmt.Println(html.UnescapeString(q.Results[9].Question))
+
+	var questions [10]string
+	var answers [10][4]string
+
+	// Outer loop is used to organise quiz questions
+	for i := 0; i < len(q.Results); i++ {
+		questions[i] = html.UnescapeString(q.Results[i].Question)
+		// Inner loop is used to organise quiz possible answers
+		for k := 0; k < len(q.Results[i].IncorrectAnswers); k++ {
+			answers[i][0] = html.UnescapeString(q.Results[i].CorrectAnswer)
+			answers[i][k+1] = html.UnescapeString(q.Results[i].IncorrectAnswers[k])
+		}
+		rand.Seed(time.Now().UnixNano())
+		rand.Shuffle(4, func(h, j int) { answers[i][h], answers[i][j] = answers[i][j], answers[i][h] })
+	}
+
+	fmt.Printf("Question: %v\nPossible Answers: %v, %v, %v, %v", questions[9], answers[9][0], answers[9][1], answers[9][2], answers[9][3])
+
+	return questions, answers
 }
