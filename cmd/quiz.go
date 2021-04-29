@@ -24,9 +24,7 @@ var quizCmd = &cobra.Command{
 	- Show some statistics.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		var q_data = getQuizData()
-		questions, answers := organiseData(q_data)
-		startQuiz(questions, answers)
+		startQuiz()
 
 	},
 }
@@ -52,6 +50,11 @@ type Question struct {
 	IncorrectAnswers []string `json:"incorrect_answers"`
 }
 
+// Global Variables
+var q_data QuestionsData
+var questions [10]string
+var answers [10][4]string
+
 /*
 	Function which gets a random set of 10 questions from the Open Trivia API and
 	returns a structure of the data.
@@ -67,8 +70,6 @@ func getQuizData() *QuestionsData {
 
 	// Print the result of API call
 	log.Println(string(data))
-
-	var q_data QuestionsData
 
 	err_1 := json.Unmarshal(data, &q_data)
 	if err_1 != nil {
@@ -91,9 +92,6 @@ func organiseData(q *QuestionsData) ([10]string, [10][4]string) {
 	fmt.Printf("Length of Array:\t%v\n", len(q.Results))
 	fmt.Println(html.UnescapeString(q.Results[9].Question))
 
-	var questions [10]string
-	var answers [10][4]string
-
 	// Outer loop is used to organise quiz questions
 	for i := 0; i < len(q.Results); i++ {
 		questions[i] = html.UnescapeString(q.Results[i].Question)
@@ -111,10 +109,11 @@ func organiseData(q *QuestionsData) ([10]string, [10][4]string) {
 	return questions, answers
 }
 
-func startQuiz(questions [10]string, answers [10][4]string) {
+func startQuiz() {
 
 	fmt.Println("------------Starting Quiz------------")
-	//fmt.Print(len(answers[1]))
+	getQuizData()
+	questions, answers := organiseData(&q_data)
 
 	for i := 0; i < len(questions); i++ {
 		fmt.Printf("\nQuestion %v\n%v\n", i+1, questions[i])
@@ -129,8 +128,8 @@ func startQuiz(questions [10]string, answers [10][4]string) {
 		choice = checkRange(choice)
 
 		var actual_answer string = answers[i][choice-1]
-		fmt.Printf(actual_answer)
-		//checkAnswer(choice)
+		//fmt.Printf(actual_answer)
+		checkAnswer(actual_answer, i)
 	}
 }
 
@@ -145,6 +144,10 @@ func checkRange(choice int) int {
 	}
 }
 
-func checkAnswer(choice string, q *QuestionsData) {
-
+func checkAnswer(choice string, question_number int) {
+	if choice == html.UnescapeString(q_data.Results[question_number].CorrectAnswer) {
+		fmt.Println("POGCHAMP")
+	} else {
+		fmt.Println("F")
+	}
 }
