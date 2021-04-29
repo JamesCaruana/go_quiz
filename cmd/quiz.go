@@ -8,6 +8,8 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
+	"os/exec"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -56,6 +58,13 @@ var questions [10]string
 var answers [10][4]string
 
 /*
+	Menu function
+*/
+func menu() {
+
+}
+
+/*
 	Function which gets a random set of 10 questions from the Open Trivia API and
 	returns a structure of the data.
 */
@@ -69,14 +78,12 @@ func getQuizData() *QuestionsData {
 	data, _ := ioutil.ReadAll(response.Body)
 
 	// Print the result of API call
-	log.Println(string(data))
+	//log.Println(string(data))
 
 	err_1 := json.Unmarshal(data, &q_data)
 	if err_1 != nil {
 		log.Println(err_1)
 	}
-	// :catjam:
-	//fmt.Printf("%v\n", html.UnescapeString(q_data.Results[0].Question))
 
 	return &q_data
 
@@ -87,10 +94,6 @@ func getQuizData() *QuestionsData {
 	the quiz.
 */
 func organiseData(q *QuestionsData) ([10]string, [10][4]string) {
-
-	// Testing prints
-	fmt.Printf("Length of Array:\t%v\n", len(q.Results))
-	fmt.Println(html.UnescapeString(q.Results[9].Question))
 
 	// Outer loop is used to organise quiz questions
 	for i := 0; i < len(q.Results); i++ {
@@ -109,45 +112,65 @@ func organiseData(q *QuestionsData) ([10]string, [10][4]string) {
 	return questions, answers
 }
 
+/*
+	Starts quiz by looping through questions.
+*/
 func startQuiz() {
 
-	fmt.Println("------------Starting Quiz------------")
+	fmt.Println("------------------------Starting Quiz------------------------")
+
 	getQuizData()
 	questions, answers := organiseData(&q_data)
+	var c_answers, inc_answers int = 0, 0
 
+	// Loop through questions and prints them
 	for i := 0; i < len(questions); i++ {
 		fmt.Printf("\nQuestion %v\n%v\n", i+1, questions[i])
+		// Loops through possible answers and prints them
 		for k := 0; k < len(answers[i]); k++ {
 			fmt.Printf("%v) %v\n", k+1, answers[i][k])
 		}
 
 		var choice int
 		fmt.Println("Input a number between 1-4 to answer1.")
-		fmt.Scan(&choice)
+		fmt.Scanln(&choice)
 
 		choice = checkRange(choice)
 
 		var actual_answer string = answers[i][choice-1]
-		//fmt.Printf(actual_answer)
-		checkAnswer(actual_answer, i)
+		// Call function to check answers and returns the updated score
+		c_answers, inc_answers = checkAnswer(actual_answer, i, c_answers, inc_answers)
+
+		c := exec.Command("clear")
+		c.Stdout = os.Stdout
+		c.Run()
+
 	}
+	fmt.Println("------------------------Quiz Finished------------------------")
+	fmt.Printf("You got %v/10 correct answers\n", c_answers)
 }
 
+/*
+	Error checking function for the user input on selecting answer.
+*/
 func checkRange(choice int) int {
 	if (choice >= 1) && (choice <= 4) {
 		fmt.Print(choice)
 		return choice
 	} else {
 		fmt.Println("Input a number between 1-4 to answer2.")
-		fmt.Scan(&choice)
+		fmt.Scanln(&choice)
 		return checkRange(choice)
 	}
 }
 
-func checkAnswer(choice string, question_number int) {
+/*
+	Function which checks answer and returns the number of correct and incorrect answers.
+*/
+func checkAnswer(choice string, question_number int, c_answers int, inc_answers int) (int, int) {
 	if choice == html.UnescapeString(q_data.Results[question_number].CorrectAnswer) {
-		fmt.Println("POGCHAMP")
+		return c_answers + 1, inc_answers
 	} else {
-		fmt.Println("F")
+		return c_answers, inc_answers + 1
 	}
 }
