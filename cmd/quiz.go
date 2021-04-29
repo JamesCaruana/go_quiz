@@ -26,7 +26,7 @@ var quizCmd = &cobra.Command{
 	- Show some statistics.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		startQuiz()
+		menu()
 
 	},
 }
@@ -56,12 +56,72 @@ type Question struct {
 var q_data QuestionsData
 var questions [10]string
 var answers [10][4]string
+var user_scores [][]int
 
 /*
-	Menu function
+	Menu function and entry point
 */
 func menu() {
+	fmt.Println("1) Start quiz!")
+	fmt.Println("2) Display statistics")
+	fmt.Println("3) Exit program")
 
+	var option int
+	fmt.Scanln(&option)
+	switch option {
+	case 1:
+		startQuiz()
+	case 2:
+		fmt.Println("Calculating statistics")
+	case 3:
+		fmt.Println("Exiting program")
+		os.Exit(1)
+	default:
+		fmt.Println("Not an option")
+	}
+
+}
+
+/*
+	Starts quiz by looping through questions.
+*/
+func startQuiz() {
+
+	fmt.Println("------------------------Starting Quiz------------------------")
+
+	getQuizData()
+	questions, answers := organiseData(&q_data)
+	var c_answers, inc_answers int = 0, 0
+
+	clearScreen()
+
+	// Loop through questions and prints them
+	for i := 0; i < len(questions); i++ {
+		fmt.Printf("\nQuestion %v\n%v\n", i+1, questions[i])
+		// Loops through possible answers and prints them
+		for k := 0; k < len(answers[i]); k++ {
+			fmt.Printf("%v) %v\n", k+1, answers[i][k])
+		}
+
+		var choice int
+		fmt.Println("Input a number between 1-4 to answer.")
+		fmt.Scanln(&choice)
+
+		choice = checkRange(choice)
+
+		var actual_answer string = answers[i][choice-1]
+		// Call function to check answers and returns the updated score
+		c_answers, inc_answers = checkAnswer(actual_answer, i, c_answers, inc_answers)
+
+		clearScreen()
+
+	}
+	fmt.Println("------------------------Quiz Finished------------------------")
+	fmt.Printf("You got %v/10 correct answers\n", c_answers)
+	time.Sleep(5 * time.Second)
+
+	clearScreen()
+	menu()
 }
 
 /*
@@ -113,44 +173,6 @@ func organiseData(q *QuestionsData) ([10]string, [10][4]string) {
 }
 
 /*
-	Starts quiz by looping through questions.
-*/
-func startQuiz() {
-
-	fmt.Println("------------------------Starting Quiz------------------------")
-
-	getQuizData()
-	questions, answers := organiseData(&q_data)
-	var c_answers, inc_answers int = 0, 0
-
-	// Loop through questions and prints them
-	for i := 0; i < len(questions); i++ {
-		fmt.Printf("\nQuestion %v\n%v\n", i+1, questions[i])
-		// Loops through possible answers and prints them
-		for k := 0; k < len(answers[i]); k++ {
-			fmt.Printf("%v) %v\n", k+1, answers[i][k])
-		}
-
-		var choice int
-		fmt.Println("Input a number between 1-4 to answer1.")
-		fmt.Scanln(&choice)
-
-		choice = checkRange(choice)
-
-		var actual_answer string = answers[i][choice-1]
-		// Call function to check answers and returns the updated score
-		c_answers, inc_answers = checkAnswer(actual_answer, i, c_answers, inc_answers)
-
-		c := exec.Command("clear")
-		c.Stdout = os.Stdout
-		c.Run()
-
-	}
-	fmt.Println("------------------------Quiz Finished------------------------")
-	fmt.Printf("You got %v/10 correct answers\n", c_answers)
-}
-
-/*
 	Error checking function for the user input on selecting answer.
 */
 func checkRange(choice int) int {
@@ -158,7 +180,7 @@ func checkRange(choice int) int {
 		fmt.Print(choice)
 		return choice
 	} else {
-		fmt.Println("Input a number between 1-4 to answer2.")
+		fmt.Println("Input a number between 1-4 to answer.")
 		fmt.Scanln(&choice)
 		return checkRange(choice)
 	}
@@ -173,4 +195,14 @@ func checkAnswer(choice string, question_number int, c_answers int, inc_answers 
 	} else {
 		return c_answers, inc_answers + 1
 	}
+}
+
+/*
+	Function which clears console screen
+*/
+func clearScreen() {
+	// Clearing console
+	c := exec.Command("clear")
+	c.Stdout = os.Stdout
+	c.Run()
 }
