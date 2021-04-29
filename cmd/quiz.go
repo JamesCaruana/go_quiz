@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/montanaflynn/stats"
 	"github.com/spf13/cobra"
 )
 
@@ -56,7 +57,7 @@ type Question struct {
 var q_data QuestionsData
 var questions [10]string
 var answers [10][4]string
-var user_scores [][]int
+var user_scores []float64
 
 /*
 	Menu function and entry point
@@ -72,7 +73,9 @@ func menu() {
 	case 1:
 		startQuiz()
 	case 2:
-		fmt.Println("Calculating statistics")
+		fmt.Println("The Sigmoid function of the scores:")
+		fmt.Println(stats.Sigmoid(user_scores))
+		menu()
 	case 3:
 		fmt.Println("Exiting program")
 		os.Exit(1)
@@ -87,12 +90,12 @@ func menu() {
 */
 func startQuiz() {
 
+	var c_answers, inc_answers int = 0, 0
+
 	fmt.Println("------------------------Starting Quiz------------------------")
 
 	getQuizData()
 	questions, answers := organiseData(&q_data)
-	var c_answers, inc_answers int = 0, 0
-
 	clearScreen()
 
 	// Loop through questions and prints them
@@ -118,6 +121,7 @@ func startQuiz() {
 	}
 	fmt.Println("------------------------Quiz Finished------------------------")
 	fmt.Printf("You got %v/10 correct answers\n", c_answers)
+	user_scores = append(user_scores, float64(c_answers))
 	time.Sleep(5 * time.Second)
 
 	clearScreen()
@@ -136,9 +140,6 @@ func getQuizData() *QuestionsData {
 		log.Printf("HTTP request failed - %v", err_0)
 	}
 	data, _ := ioutil.ReadAll(response.Body)
-
-	// Print the result of API call
-	//log.Println(string(data))
 
 	err_1 := json.Unmarshal(data, &q_data)
 	if err_1 != nil {
@@ -166,8 +167,6 @@ func organiseData(q *QuestionsData) ([10]string, [10][4]string) {
 		rand.Seed(time.Now().UnixNano())
 		rand.Shuffle(4, func(k, l int) { answers[i][k], answers[i][l] = answers[i][l], answers[i][k] })
 	}
-
-	//fmt.Printf("Question: %v\nPossible Answers: %v, %v, %v, %v\n", questions[9], answers[9][0], answers[9][1], answers[9][2], answers[9][3])
 
 	return questions, answers
 }
