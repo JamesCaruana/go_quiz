@@ -12,7 +12,6 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/montanaflynn/stats"
 	"github.com/spf13/cobra"
 )
 
@@ -63,9 +62,10 @@ var user_scores []float64
 	Menu function and entry point
 */
 func menu() {
-	fmt.Println("1) Start quiz!")
-	fmt.Println("2) Display statistics")
-	fmt.Println("3) Exit program")
+
+	fmt.Println("Quiz Menu")
+	fmt.Println("1) Attempt quiz")
+	fmt.Println("2) Exit program")
 
 	var option int
 	fmt.Scanln(&option)
@@ -73,10 +73,6 @@ func menu() {
 	case 1:
 		startQuiz()
 	case 2:
-		fmt.Println("The Sigmoid function of the scores:")
-		fmt.Println(stats.Sigmoid(user_scores))
-		menu()
-	case 3:
 		fmt.Println("Exiting program")
 		os.Exit(1)
 	default:
@@ -122,6 +118,7 @@ func startQuiz() {
 	fmt.Println("------------------------Quiz Finished------------------------")
 	fmt.Printf("You got %v/10 correct answers\n", c_answers)
 	user_scores = append(user_scores, float64(c_answers))
+	calcPercentile(float64(c_answers))
 	time.Sleep(5 * time.Second)
 
 	clearScreen()
@@ -204,4 +201,23 @@ func clearScreen() {
 	c := exec.Command("clear")
 	c.Stdout = os.Stdout
 	c.Run()
+}
+
+/*
+	Function which calculates t
+*/
+func calcPercentile(score float64) float64 {
+
+	var percentile, nvlt float64
+
+	for i := 0; i < len(user_scores); i++ {
+		if user_scores[i] < score {
+			nvlt++
+		}
+	}
+
+	percentile = (nvlt / float64(len(user_scores)) * 100)
+	fmt.Printf("You are in the %.2fth Percentile", percentile)
+
+	return percentile
 }
